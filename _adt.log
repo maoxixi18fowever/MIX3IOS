@@ -1,0 +1,251 @@
+warning: C:\Users\maomo\AppData\Roaming\Tencent\Marvis\User\oAN1i2WTsJPeJAF64iZar4zhsFhM\workspace\conv_d6b6946f89464b00b40113315e0af761\temp\build\ios-sweet-base\ios-sweet-50548bc0bd5bdd0870d7b053e80107b9a2942a11\tools\../research/ipsw-x/d22ap.adt missing, no /product node
+device-tree {
+  AAPL,phandle = 0x15
+  compatible = <0x6850695041323244 0x78332c3031656e6f 0x6f702c696d6f6169 0x6f6371736972616c 0x3534386d64732c6d 0x4d5241656c707041>
+  model = 6950686f6e6531302c33 (10 bytes)
+  target-type = 443232 (3 bytes)
+  target-sub-type = 4432324150 (5 bytes)
+  manufacturer = 'Apple Inc.'
+  #address-cells = 0x2
+  #size-cells = 0x2
+  chosen {
+    AAPL,phandle = 0x1
+    dram-base = 0xb0000000
+    dram-size = '|||M'
+    random-seed = <0xe91fb4b9130aeabd 0xe47aeb3d89daf01d 0x34dfd3095875f2f0 0xb1d95d94bf59bd2f 0xae9bb4e820b8b04b 0x6575bbce986f0e79 0x69aae575e324f2a4 0x6eee04ee442905b>
+    debug-enabled = 0x1
+    firmware-version = 'polaris-shim'
+    system-firmware-version = 'polaris-shim'
+    boot-manifest-hash = <0x15837d1d0136be5c 0xcaff932a12f1cd15 0xad884319e9058bd4 0xa0a5e41a2a75e912 0x15398378b0034b9 0x552ff6f087e1d04>
+    crypto-hash-method = 'sha2-384'
+    display-scale = 0x3
+    unique-chip-id = 0x5357454554000001
+    chip-id = 0x8015
+    certificate-production-status = ''
+    effective-production-status-ap = ''
+    certificate-security-mode = 0x1
+    effective-security-mode-sep = 0x1
+    memory-map {
+      AAPL,phandle = 0x2
+    }
+    asmb {
+      AAPL,phandle = 0x3
+      lp-sip0 = 'o'
+      lp-sip1 = 0x1
+    }
+  }
+  defaults {
+    AAPL,phandle = 0x13
+    no-effaceable-storage = 0x1
+  }
+  cpus {
+    AAPL,phandle = 0xc
+    #address-cells = 0x1
+    #size-cells = ''
+    cpu0 {
+      AAPL,phandle = 0x4
+      device_type = 'cpu'
+      compatible = 71636f6d2c6b72796f33383541524d2c7638 (18 bytes)
+      reg = ''
+      cpu-id = ''
+      cluster-id = ''
+      cluster-type = ''
+      die-cluster-id = ''
+      cluster-core-id = ''
+      l2-cache-id = ''
+      l3-cache-id = ''
+      state = 'running'
+      timebase-frequency = 0x124f800
+      clock-frequency = 0xa7157000
+      bus-frequency = 0x5f5e100
+      memory-frequency = 0x6f38e680
+      peripheral-frequency = 0x124f800
+      fixed-frequency = 0x124f800
+    }
+    cpu1 {
+      AAPL,phandle = 0x5
+      device_type = 'cpu'
+      compatible = 71636f6d2c6b72796f33383541524d2c7638 (18 bytes)
+      reg = 0x100
+      cpu-id = 0x1
+      cluster-id = ''
+      cluster-type = ''
+      die-cluster-id = ''
+      cluster-core-id = 0x1
+      l2-cache-id = 0x1
+      l3-cache-id = ''
+      state = 'stopped'
+      timebase-frequency = 0x124f800
+      clock-frequency = 0xa7157000
+      bus-frequency = 0x5f5e100
+      memory-frequency = 0x6f38e680
+      peripheral-frequency = 0x124f800
+      fixed-frequency = 0x124f800
+    }
+    cpu2 {
+      AAPL,phandle = 0x6
+      device_type = 'cpu'
+      compatible = 71636f6d2c6b72796f33383541524d2c7638 (18 bytes)
+      reg = 0x200
+      cpu-id = 0x2
+      cluster-id = ''
+      cluster-type = ''
+      die-cluster-id = ''
+      cluster-core-id = 0x2
+      l2-cache-id = 0x2
+      l3-cache-id = ''
+      state = 'stopped'
+      timebase-frequency = 0x124f800
+      clock-frequency = 0xa7157000
+      bus-frequency = 0x5f5e100
+      memory-frequency = 0x6f38e680
+      peripheral-frequency = 0x124f800
+      fixed-frequency = 0x124f800
+    }
+    cpu3 {
+      AAPL,phandle = 0x7
+      device_type = 'cpu'
+      compatible = 71636f6d2c6b72796f33383541524d2c7638 (18 bytes)
+      reg = 0x300
+      cpu-id = 0x3
+      cluster-id = ''
+      cluster-type = ''
+      die-cluster-id = ''
+      cluster-core-id = 0x3
+      l2-cache-id = 0x3
+      l3-cache-id = ''
+      state = 'stopped'
+      timebase-frequency = 0x124f800
+      clock-frequency = 0xa7157000
+      bus-frequency = 0x5f5e100
+      memory-frequency = 0x6f38e680
+      peripheral-frequency = 0x124f800
+      fixed-frequency = 0x124f800
+    }
+    cpu4 {
+      AAPL,phandle = 0x8
+      device_type = 'cpu'
+      compatible = 71636f6d2c6b72796f33383541524d2c7638 (18 bytes)
+      reg = 0x400
+      cpu-id = 0x4
+      cluster-id = ''
+      cluster-type = ''
+      die-cluster-id = ''
+      cluster-core-id = 0x4
+      l2-cache-id = 0x4
+      l3-cache-id = ''
+      state = 'stopped'
+      timebase-frequency = 0x124f800
+      clock-frequency = 0x6b931000
+      bus-frequency = 0x5f5e100
+      memory-frequency = 0x6f38e680
+      peripheral-frequency = 0x124f800
+      fixed-frequency = 0x124f800
+    }
+    cpu5 {
+      AAPL,phandle = 0x9
+      device_type = 'cpu'
+      compatible = 71636f6d2c6b72796f33383541524d2c7638 (18 bytes)
+      reg = 0x500
+      cpu-id = 0x5
+      cluster-id = ''
+      cluster-type = ''
+      die-cluster-id = ''
+      cluster-core-id = 0x5
+      l2-cache-id = 0x5
+      l3-cache-id = ''
+      state = 'stopped'
+      timebase-frequency = 0x124f800
+      clock-frequency = 0x6b931000
+      bus-frequency = 0x5f5e100
+      memory-frequency = 0x6f38e680
+      peripheral-frequency = 0x124f800
+      fixed-frequency = 0x124f800
+    }
+    cpu6 {
+      AAPL,phandle = 0xa
+      device_type = 'cpu'
+      compatible = 71636f6d2c6b72796f33383541524d2c7638 (18 bytes)
+      reg = 0x600
+      cpu-id = 0x6
+      cluster-id = ''
+      cluster-type = ''
+      die-cluster-id = ''
+      cluster-core-id = 0x6
+      l2-cache-id = 0x6
+      l3-cache-id = ''
+      state = 'stopped'
+      timebase-frequency = 0x124f800
+      clock-frequency = 0x6b931000
+      bus-frequency = 0x5f5e100
+      memory-frequency = 0x6f38e680
+      peripheral-frequency = 0x124f800
+      fixed-frequency = 0x124f800
+    }
+    cpu7 {
+      AAPL,phandle = 0xb
+      device_type = 'cpu'
+      compatible = 71636f6d2c6b72796f33383541524d2c7638 (18 bytes)
+      reg = 0x700
+      cpu-id = 0x7
+      cluster-id = ''
+      cluster-type = ''
+      die-cluster-id = ''
+      cluster-core-id = 0x7
+      l2-cache-id = 0x7
+      l3-cache-id = ''
+      state = 'stopped'
+      timebase-frequency = 0x124f800
+      clock-frequency = 0x6b931000
+      bus-frequency = 0x5f5e100
+      memory-frequency = 0x6f38e680
+      peripheral-frequency = 0x124f800
+      fixed-frequency = 0x124f800
+    }
+  }
+  arm-io {
+    AAPL,phandle = 0xe
+    device_type = 'polaris-io'
+    compatible = 'polaris-io|arm-io'
+    #address-cells = 0x2
+    #size-cells = 0x2
+    ranges = <0x0 0x1000000 0xff000000>
+    gic {
+      AAPL,phandle = 0xd
+      compatible = 'arm,gic-v3'
+      interrupt-controller = <>
+      virtual-timer-intid = 0x13
+      reg = <0x16a00000 0x10000 0x16a60000 0x100000>
+    }
+    wdt {
+      AAPL,phandle = 0xf
+      no-pmu = 0x1
+    }
+    disp0 {
+      AAPL,phandle = 0x10
+      device_type = 'display-subsystem'
+      compatible = 'polaris,display'
+      canvas-width = 0x438
+      canvas-height = 0x870
+    }
+  }
+  sweet-fbcon {
+    AAPL,phandle = 0x11
+    reg = <0x9d400000 0x2400000>
+    width = 0x438
+    height = 0x870
+    stride = 0x10e0
+  }
+  buttons {
+    AAPL,phandle = 0x14
+    button-names = 'volup|voldown|hold'
+    home-button-type = 0x2
+    opposed-power-vol-buttons = 0x1
+  }
+  sweet-ufs {
+    AAPL,phandle = 0x12
+    compatible = 'qcom,ufshc'
+    reg = <0x1d84000 0x2500>
+  }
+}
+out\kernel.adt: 9912 bytes (polaris)

@@ -1,0 +1,104 @@
+diff --git a/makedefs/MakeInc.def b/makedefs/MakeInc.def
+--- a/makedefs/MakeInc.def
++++ b/makedefs/MakeInc.def
+@@ -29,7 +29,7 @@
+ else ifneq ($(findstring _host,$(RC_ProjectName)),)
+ SUPPORTED_ARM64_MACHINE_CONFIGS = NONE
+ else
+-SUPPORTED_ARM64_MACHINE_CONFIGS = BCM2837 T6000 T8101 T8103 VMAPPLE SWEET POLARIS
++SUPPORTED_ARM64_MACHINE_CONFIGS = BCM2837 T6000 T8101 T8103 VMAPPLE SWEET POLARIS PERSEUS
+ 
+ endif
+ 
+@@ -75,3 +75,8 @@
+ 
+ 
+ #
++# perseus (Xiaomi Mi Mix 3 4G, SDM845) reuses the same arrangement: sweet's
++# kernel code, with the board itself described in the device tree. Nothing in
++# this tree is #ifdef'd on PERSEUS, so the flag's job is to give the build a
++# machine name, a master file and an arm64 arch string.
++MACHINE_FLAGS_ARM64_PERSEUS = -DARM64_BOARD_CONFIG_PERSEUS -DARM64_BOARD_CONFIG_SWEET -march=armv8.2-a+crypto
+@@ -259,7 +259,7 @@
+ # status.c builds) while HAS_APPLE_PAC stays undefined (it needs
+ # CPU_HAS_APPLE_PAC, which only Apple's H13/VMAPPLE define), leaving
+ # pmap_sign_user_ptr, pmap_auth_user_ptr and thread->machine.jop_pid undeclared.
+-ifeq ($(CURRENT_MACHINE_CONFIG),POLARIS)
++ifneq ($(filter POLARIS PERSEUS,$(CURRENT_MACHINE_CONFIG)),)
+ override ARCH_STRING_FOR_CURRENT_MACHINE_CONFIG := arm64
+ endif
+ 
+@@ -285,7 +285,7 @@
+ ifneq ($(filter arm64,$(ARCH_STRING_FOR_CURRENT_MACHINE_CONFIG)),)
+ # sweet's Cortex-A76/A55 and polaris' Kryo 385 have no pointer authentication:
+ # stay plain arm64
+-ifneq ($(filter SWEET POLARIS,$(CURRENT_MACHINE_CONFIG)),)
++ifneq ($(filter SWEET POLARIS PERSEUS,$(CURRENT_MACHINE_CONFIG)),)
+ export ARCH_STRING_FOR_CURRENT_MACHINE_CONFIG := arm64e
+ endif
+ endif
+diff --git a/pexpert/pexpert/arm64/Makefile b/pexpert/pexpert/arm64/Makefile
+--- a/pexpert/pexpert/arm64/Makefile
++++ b/pexpert/pexpert/arm64/Makefile
+@@ -19,7 +19,8 @@
+ 	VMAPPLE.h \
+ 	BCM2837.h \
+ 	SWEET.h \
+-	POLARIS.h
++	POLARIS.h \
++	PERSEUS.h
+ 
+ 
+ # Headers installed into System.framework/PrivateHeaders (userspace internal SDK only).
+diff --git a/pexpert/pexpert/arm64/PERSEUS.h b/pexpert/pexpert/arm64/PERSEUS.h
+new file mode 100644
+--- /dev/null
++++ b/pexpert/pexpert/arm64/PERSEUS.h
+@@ -0,0 +1,47 @@
++/*
++ * Board config for the Xiaomi Mi Mix 3 4G ("perseus", Qualcomm SDM845 /
++ * Snapdragon 845): Kryo 385 = Cortex-A75 + Cortex-A55, ARMv8.2, no PAC.
++ *
++ * Like polaris this board is built as a sweet variant - ARM64_BOARD_CONFIG_PERSEUS,
++ * ARM64_BOARD_CONFIG_SWEET and plain SWEET are all defined - because
++ * pexpert/arm64/SWEET.h holds no SoC-specific address:
++ *   - generic ARM core (no APPLE_ARM64_ARCH_FAMILY), so none of Apple's
++ *     implementation-defined system registers are touched;
++ *   - ARMv8.2 cores without pointer authentication (Kryo 385 = A75+A55, the same
++ *     ISA level as sweet's Kryo 470 = A76+A55) -> the kernel stays plain arm64
++ *     rather than arm64e; see the PERSEUS override in makedefs/MakeInc.def;
++ *   - GICv3 with two security states: TrustZone owns Group 0, so the timer and
++ *     IPIs arrive as Group 1 IRQs through sleh_irq();
++ *   - architected timer PPIs numbered 1/2/3/0, so the virtual timer XNU uses is
++ *     INTID 16 + 3 = 19;
++ *   - 16K pages, 64-byte cache lines, PSCI CPU_ON, no P/E clusters.
++ *
++ * Nothing in SWEET.h carries an SoC address, so what differs on the Mix 3 is
++ * described in the device tree tools/mkadt.py builds. Against sweet only the
++ * panel changes; against polaris only the UFS aperture - the Mix 3 is otherwise
++ * plain SDM845:
++ *   - panel        1080 x 2340 AMOLED (sweet 1080 x 2400, polaris 1080 x 2160)
++ *   - framebuffer  cont_splash_region 0x9d400000, size 0x2400000 (as sweet)
++ *   - UFS          ufshc@1d84000, aperture 0x2500 (as polaris)
++ *   - GIC          0x17a00000 / 0x17a60000, virtual timer INTID 19 (as sweet)
++ * Taken from the vendor device tree rather than guessed: MiCode/
++ * Xiaomi_Kernel_OpenSource, branch perseus-p-oss, arch/arm64/boot/dts/qcom/
++ * {sdm845.dtsi, perseus-p0.dtsi}. tools/mkadt.py's perseus entry carries the
++ * line references.
++ *
++ * The MAX_* values come from the ARM64_BOARD_CONFIG_SWEET block in
++ * board_config.h and suit SDM845 unchanged for a first boot: 8 cores exposed as
++ * one homogeneous cluster (the A75s are cores 0-3, but the scheduler is not told
++ * they are faster, exactly like sweet). Adding a PERSEUS block here as well
++ * would only redefine them, since both macros are set.
++ */
++
++#ifndef _PEXPERT_ARM64_PERSEUS_H
++#define _PEXPERT_ARM64_PERSEUS_H
++
++#include <pexpert/arm64/SWEET.h>
++
++#define PERSEUS                        1
++#define SDM845                         1
++
++#endif /* ! _PEXPERT_ARM64_PERSEUS_H */
