@@ -80,13 +80,35 @@ jobs:
           H="$SDK/System/Library/Frameworks/Kernel.framework/Versions/A/PrivateHeaders/IOKit/IORPC.h"
           if [ -f "$H" ]; then grep -n "kernelContent" "$H" || echo "absent"; else echo "IORPC.h not in SDK"; fi
           echo "=== KDKs present ==="; ls -d /Library/Developer/KDKs/* 2>/dev/null || echo none
+          # annotations are the only log surface readable without signing in
+          echo "::notice::sdk=$(xcrun --sdk macosx --show-sdk-version) iig=$(xcrun --find iig 2>/dev/null)"
+          if [ -f "$H" ] && grep -q "kernelContent" "$H"; then
+            echo "::notice::SDK IORPC.h DOES define kernelContent"
+          else
+            echo "::notice::SDK IORPC.h has no kernelContent"
+          fi
 
       - name: Build
         working-directory: dxb
         env:
           # keep going after errors so one run reports every compile failure
           MAKEFLAGS: ${{ inputs.keep_going == 'false' && '' || '-k' }}
-        run: bash build.sh
+        run: |
+          set -o pipefail
+          bash build.sh 2>&1 | tee ../build.log
+
+      - name: Surface build errors
+        if: always()
+        run: |
+          L=build.log
+          if [ ! -f "$L" ]; then echo "::error::build.log missing"; exit 0; fi
+          echo "build.log: $(wc -l < "$L") lines, $(grep -c 'error:' "$L" 2>/dev/null || echo 0) error lines"
+          grep -nE "error:|Error [0-9]+|\*\*\* " "$L" | head -14 | while IFS= read -r line; do
+            echo "::error::$(printf '%s' "$line" | cut -c1-900)"
+          done
+          tail -8 "$L" | while IFS= read -r line; do
+            echo "::error::tail| $(printf '%s' "$line" | cut -c1-900)"
+          done
 
       - name: Package build tree for local compiles
         if: always()
@@ -107,7 +129,9 @@ jobs:
         if: always()
         with:
           name: xnu-buildtree
-          path: buildtree.tgz
+          path: |
+            buildtree.tgz
+            build.log
           retention-days: 7
 
       - name: Inspect closed KDK support libs
