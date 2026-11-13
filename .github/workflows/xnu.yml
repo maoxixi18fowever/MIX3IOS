@@ -145,24 +145,26 @@ jobs:
       - name: Surface build errors
         if: always()
         run: |
-          L=build.log
-          if [ ! -f "$L" ]; then echo "::error::build.log missing"; exit 0; fi
-          echo "build.log: $(wc -l < "$L") lines, $(grep -cE ': (fatal )?error:' "$L" || true) compiler error lines"
-          # Annotations are capped per run, so pack the digest into a couple of
-          # them instead of spending the budget one error line at a time.
-          {
-            echo "== compiler errors =="
-            grep -oE '[^ ][^ ]*: [0-9]+:[0-9]+: (fatal )?error: .*' "$L" | sort -u | head -24
-            echo "== make failures =="
-            grep -E '\*\*\* ' "$L" | head -6
-            echo "== tail =="
-            tail -6 "$L"
-          } > surface.txt 2>/dev/null || true
+          # A green build must not leave a red annotation behind: only emit
+          # ::error:: when the log really contains compiler or make failures.
           python3 - <<'PY'
-          text = open('surface.txt', encoding='utf-8', errors='replace').read()
-          text = ' + '.join(ln.strip() for ln in text.splitlines() if ln.strip())
-          for i in range(0, len(text), 3500):
-              print('::error::' + text[i:i + 3500])
+          import re, os
+          if not os.path.exists('build.log'):
+              print('::error::build.log missing')
+              raise SystemExit(0)
+          clean = [re.sub(r'\x1b\[[0-9;]*m', '', re.sub(r'^\S*Z ', '', l))
+                   for l in open('build.log', encoding='utf-8', errors='replace').read().splitlines()]
+          errs = sorted({m for l in clean
+                         for m in re.findall(r'[^ \t]+?:\d+:\d+:\s*(?:fatal )?error: .*', l)})
+          mks = [l.strip() for l in clean if '*** ' in l][:6]
+          print(f'build.log: {len(clean)} lines, {len(errs)} compiler errors, {len(mks)} make failures')
+          if not errs and not mks:
+              print('::notice::build.log clean: no compiler errors, no make failures')
+              raise SystemExit(0)
+          body = ' + '.join([*errs[:24], '== make failures ==', *mks,
+                             '== tail ==', *[l.strip() for l in clean[-6:] if l.strip()]])
+          for i in range(0, len(body), 3500):
+              print('::error::' + body[i:i + 3500])
           PY
 
       - name: Package build tree for local compiles
