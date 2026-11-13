@@ -1,7 +1,8 @@
 diff --git a/makedefs/MakeInc.def b/makedefs/MakeInc.def
+index d45e04f..88fece7 100644
 --- a/makedefs/MakeInc.def
 +++ b/makedefs/MakeInc.def
-@@ -29,7 +29,7 @@
+@@ -29,7 +29,7 @@ SUPPORTED_ARM64_MACHINE_CONFIGS = NONE
  else ifneq ($(findstring _host,$(RC_ProjectName)),)
  SUPPORTED_ARM64_MACHINE_CONFIGS = NONE
  else
@@ -10,16 +11,19 @@ diff --git a/makedefs/MakeInc.def b/makedefs/MakeInc.def
  
  endif
  
-@@ -75,3 +75,8 @@
- 
- 
- #
+@@ -72,6 +72,11 @@ MACHINE_FLAGS_ARM64_SWEET = -DARM64_BOARD_CONFIG_SWEET                -march=arm
+ # declaration and use sites in sync (e.g. protos.h declares sweet_vtimer_intid
+ # under ARM64_BOARD_CONFIG_SWEET while sleh.c uses it under plain SWEET).
+ MACHINE_FLAGS_ARM64_POLARIS = -DARM64_BOARD_CONFIG_POLARIS -DARM64_BOARD_CONFIG_SWEET -march=armv8.2-a+crypto
 +# perseus (Xiaomi Mi Mix 3 4G, SDM845) reuses the same arrangement: sweet's
 +# kernel code, with the board itself described in the device tree. Nothing in
 +# this tree is #ifdef'd on PERSEUS, so the flag's job is to give the build a
 +# machine name, a master file and an arm64 arch string.
 +MACHINE_FLAGS_ARM64_PERSEUS = -DARM64_BOARD_CONFIG_PERSEUS -DARM64_BOARD_CONFIG_SWEET -march=armv8.2-a+crypto
-@@ -259,7 +259,7 @@
+ 
+ 
+ #
+@@ -259,7 +264,7 @@ else
  # status.c builds) while HAS_APPLE_PAC stays undefined (it needs
  # CPU_HAS_APPLE_PAC, which only Apple's H13/VMAPPLE define), leaving
  # pmap_sign_user_ptr, pmap_auth_user_ptr and thread->machine.jop_pid undeclared.
@@ -28,7 +32,7 @@ diff --git a/makedefs/MakeInc.def b/makedefs/MakeInc.def
  override ARCH_STRING_FOR_CURRENT_MACHINE_CONFIG := arm64
  endif
  
-@@ -285,7 +285,7 @@
+@@ -285,7 +290,7 @@ export ARCH_STRING_FOR_CURRENT_MACHINE_CONFIG := $(shell echo $(CURRENT_ARCH_CON
  ifneq ($(filter arm64,$(ARCH_STRING_FOR_CURRENT_MACHINE_CONFIG)),)
  # sweet's Cortex-A76/A55 and polaris' Kryo 385 have no pointer authentication:
  # stay plain arm64
@@ -38,9 +42,10 @@ diff --git a/makedefs/MakeInc.def b/makedefs/MakeInc.def
  endif
  endif
 diff --git a/pexpert/pexpert/arm64/Makefile b/pexpert/pexpert/arm64/Makefile
+index e88a025..0785870 100644
 --- a/pexpert/pexpert/arm64/Makefile
 +++ b/pexpert/pexpert/arm64/Makefile
-@@ -19,7 +19,8 @@
+@@ -19,7 +19,8 @@ PRIVATE_KERNELFILES = \
  	VMAPPLE.h \
  	BCM2837.h \
  	SWEET.h \
@@ -52,6 +57,7 @@ diff --git a/pexpert/pexpert/arm64/Makefile b/pexpert/pexpert/arm64/Makefile
  # Headers installed into System.framework/PrivateHeaders (userspace internal SDK only).
 diff --git a/pexpert/pexpert/arm64/PERSEUS.h b/pexpert/pexpert/arm64/PERSEUS.h
 new file mode 100644
+index 0000000..308199d
 --- /dev/null
 +++ b/pexpert/pexpert/arm64/PERSEUS.h
 @@ -0,0 +1,47 @@

@@ -53,6 +53,12 @@ jobs:
           # libfirehose_kernel is built arm64e-only; the SWEET kernel is plain arm64
           sed -i '' 's/ARCHS="x86_64 arm64e" VALID_ARCHS="x86_64 arm64e"/ARCHS="x86_64 arm64e arm64" VALID_ARCHS="x86_64 arm64e arm64"/' dxb/build.sh
           grep -c 'VALID_ARCHS="x86_64 arm64e arm64"' dxb/build.sh
+          # build.sh silently downgrades an unapplicable patch to a ::warning::
+          # that the log surface cannot see, which is how the PERSEUS machine
+          # config went missing while the build only complained later on. Turn
+          # every skip into an annotation so it shows up in the run summary.
+          sed -i '' 's|^\( *\)warning "Skipping patch.*APPLY_CHECK}"|\1echo "::error::SKIPPED PATCH $(basename ${PATCH}) :: ${APPLY_CHECK}"|' dxb/build.sh
+          grep -n 'SKIPPED PATCH' dxb/build.sh
           ls dxb/patches
 
       - name: Deps
@@ -96,6 +102,29 @@ jobs:
         run: |
           set -o pipefail
           bash build.sh 2>&1 | tee ../build.log
+
+      - name: Verify perseus config landed
+        if: always()
+        run: |
+          # The build only fails late (MakeInc.kernel) when a patch was skipped,
+          # so assert up front that the machine config really made it into the tree.
+          fail=0
+          if [ ! -d dxb/xnu ]; then
+            echo "::warning::dxb/xnu not present, patch stage never ran"
+            exit 0
+          fi
+          if grep -q 'SUPPORTED_ARM64_MACHINE_CONFIGS = .*PERSEUS' dxb/xnu/makedefs/MakeInc.def; then
+            echo "::notice::PERSEUS listed in SUPPORTED_ARM64_MACHINE_CONFIGS"
+          else
+            echo "::error::PERSEUS missing from SUPPORTED_ARM64_MACHINE_CONFIGS (0101 did not apply)"
+            fail=1
+          fi
+          grep -n 'MACHINE_FLAGS_ARM64_PERSEUS' dxb/xnu/makedefs/MakeInc.def || { echo "::error::MACHINE_FLAGS_ARM64_PERSEUS missing"; fail=1; }
+          for f in dxb/xnu/pexpert/pexpert/arm64/PERSEUS.h dxb/xnu/config/MASTER.arm64.perseus dxb/xnu/pexpert/pexpert/arm64/SWEET.h; do
+            [ -f "$f" ] && echo "::notice::present $f" || { echo "::error::missing $f"; fail=1; }
+          done
+          grep -n 'PERSEUS.h' dxb/xnu/pexpert/pexpert/arm64/Makefile || { echo "::error::PERSEUS.h not in pexpert Makefile"; fail=1; }
+          exit $fail
 
       - name: Surface build errors
         if: always()
