@@ -2,9 +2,9 @@
 # dxb runs patches/*.sh from the XNU source root before applying *.patch.
 set -euo pipefail
 
-# POLARIS is compiled as a SWEET variant (see pexpert/arm64/POLARIS.h), so it
-# needs this provider staged too.
-case "${MACHINE_CONFIG:-}" in SWEET|POLARIS) ;; *) exit 0 ;; esac
+# POLARIS and PERSEUS are compiled as SWEET variants (see pexpert/arm64/*.h),
+# so they need this provider staged too.
+case "${MACHINE_CONFIG:-}" in SWEET|POLARIS|PERSEUS) ;; *) exit 0 ;; esac
 [[ "${MACOS_VERSION:-}" == 13.5 ]] || {
     echo 'SWEET libpthread integration requires xnu-8796.141.3 (macOS 13.5)' >&2
     exit 1

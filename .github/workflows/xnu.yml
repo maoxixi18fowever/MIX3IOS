@@ -56,8 +56,10 @@ jobs:
           # build.sh silently downgrades an unapplicable patch to a ::warning::
           # that the log surface cannot see, which is how the PERSEUS machine
           # config went missing while the build only complained later on. Turn
-          # every skip into an annotation so it shows up in the run summary.
-          sed -i '' 's|^\( *\)warning "Skipping patch.*APPLY_CHECK}"|\1echo "::error::SKIPPED PATCH $(basename ${PATCH}) :: ${APPLY_CHECK}"|' dxb/build.sh
+          # every skip into an annotation so it shows up in the run summary --
+          # but as a warning: annotations are capped per run and 17 hard errors
+          # pushed the actual compile failures out of the visible list.
+          sed -i '' 's|^\( *\)warning "Skipping patch.*APPLY_CHECK}"|\1echo "::warning::SKIPPED PATCH $(basename ${PATCH}) :: ${APPLY_CHECK}"|' dxb/build.sh
           grep -n 'SKIPPED PATCH' dxb/build.sh
           ls dxb/patches
 
@@ -124,6 +126,20 @@ jobs:
             [ -f "$f" ] && echo "::notice::present $f" || { echo "::error::missing $f"; fail=1; }
           done
           grep -n 'PERSEUS.h' dxb/xnu/pexpert/pexpert/arm64/Makefile || { echo "::error::PERSEUS.h not in pexpert Makefile"; fail=1; }
+          # PERSEUS is compiled as a SWEET variant, so the *.sh staging scripts
+          # and the built-in provider make filters must treat it like POLARIS.
+          # Missing providers are what the wq/kesl compile then reports as
+          # 'sweet_bearssl/inc/bearssl_hash.h file not found' and friends.
+          for f in dxb/xnu/bsd/pthread/sweet_libpthread/kern/kern_init.c \
+                   dxb/xnu/bsd/pthread/sweet_libpthread/kern/kern_synch.c \
+                   dxb/xnu/libkern/crypto/sweet_bearssl/inc/bearssl_hash.h \
+                   dxb/xnu/bsd/sweet_hfs/core/hfs.h \
+                   dxb/xnu/bsd/sweet_hfs/core/hfs_catalog.c; do
+            [ -f "$f" ] && echo "::notice::staged $f" || { echo "::error::provider not staged: $f"; fail=1; }
+          done
+          for f in dxb/xnu/bsd/conf/Makefile.template dxb/xnu/libkern/conf/Makefile.template; do
+            grep -q 'filter SWEET POLARIS PERSEUS' "$f" || { echo "::error::PERSEUS missing from builtin provider filter: $f"; fail=1; }
+          done
           exit $fail
 
       - name: Surface build errors
@@ -131,13 +147,23 @@ jobs:
         run: |
           L=build.log
           if [ ! -f "$L" ]; then echo "::error::build.log missing"; exit 0; fi
-          echo "build.log: $(wc -l < "$L") lines, $(grep -c 'error:' "$L" 2>/dev/null || echo 0) error lines"
-          grep -nE "error:|Error [0-9]+|\*\*\* " "$L" | head -14 | while IFS= read -r line; do
-            echo "::error::$(printf '%s' "$line" | cut -c1-900)"
-          done
-          tail -8 "$L" | while IFS= read -r line; do
-            echo "::error::tail| $(printf '%s' "$line" | cut -c1-900)"
-          done
+          echo "build.log: $(wc -l < "$L") lines, $(grep -cE ': (fatal )?error:' "$L" || true) compiler error lines"
+          # Annotations are capped per run, so pack the digest into a couple of
+          # them instead of spending the budget one error line at a time.
+          {
+            echo "== compiler errors =="
+            grep -oE '[^ ][^ ]*: [0-9]+:[0-9]+: (fatal )?error: .*' "$L" | sort -u | head -24
+            echo "== make failures =="
+            grep -E '\*\*\* ' "$L" | head -6
+            echo "== tail =="
+            tail -6 "$L"
+          } > surface.txt 2>/dev/null || true
+          python3 - <<'PY'
+          text = open('surface.txt', encoding='utf-8', errors='replace').read()
+          text = ' + '.join(ln.strip() for ln in text.splitlines() if ln.strip())
+          for i in range(0, len(text), 3500):
+              print('::error::' + text[i:i + 3500])
+          PY
 
       - name: Package build tree for local compiles
         if: always()
