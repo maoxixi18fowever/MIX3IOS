@@ -34,9 +34,11 @@ env:
 
 jobs:
   build:
-    # macos-14 still ships Xcode 15.x: its iig matches the xnu-8796 IORPC ABI
-    # (Xcode 16's iig emits IORPC.kernelContent, which this xnu lacks)
-    runs-on: macos-14
+    # macos-14 (the only image that still shipped Xcode 15.x) was retired on
+    # 2026-11-02. This now runs on macos-15-intel with the oldest Xcode that
+    # image still carries (16.0). Xcode 16's iig emits IORPC.kernelContent,
+    # which xnu-8796 does not define, so that has to be patched in.
+    runs-on: macos-15-intel
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
@@ -61,11 +63,23 @@ jobs:
           sudo chmod +x /usr/local/bin/xcodes
           sw_vers
           ls -d /Applications/Xcode*.app
-          XC=$(ls -d /Applications/Xcode_*.app | sort -V | head -1)
+          XC=/Applications/Xcode_16.app
+          [ -d "$XC" ] || XC=$(ls -d /Applications/Xcode_*.app | sort -V | head -1)
           echo "DEVELOPER_DIR=$XC/Contents/Developer" >> "$GITHUB_ENV"
           sudo xcode-select -s "$XC"
           xcodebuild -version
           xcrun --find iig
+
+      - name: Toolchain probe
+        run: |
+          echo "=== xcodebuild ==="; xcodebuild -version
+          echo "=== sdk ==="; xcrun --sdk macosx --show-sdk-version
+          SDK=$(xcrun --sdk macosx --show-sdk-path); echo "SDK=$SDK"
+          echo "=== iig ==="; xcrun --find iig || true
+          echo "=== kernelContent in SDK IORPC.h ==="
+          H="$SDK/System/Library/Frameworks/Kernel.framework/Versions/A/PrivateHeaders/IOKit/IORPC.h"
+          if [ -f "$H" ]; then grep -n "kernelContent" "$H" || echo "absent"; else echo "IORPC.h not in SDK"; fi
+          echo "=== KDKs present ==="; ls -d /Library/Developer/KDKs/* 2>/dev/null || echo none
 
       - name: Build
         working-directory: dxb
