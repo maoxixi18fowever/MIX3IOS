@@ -57,10 +57,11 @@ MACHINES = {
         ufs=0x01d84000, ufs_size=0x3000,
         timebase=19200000, vtimer_intid=19,
         canvas_w=1125, canvas_h=2436,
-        compatible=b'D22AP' + b'iPhone10,3' + b'xiaomi,sweet' + b'qcom,sm7150' + b'AppleARM',
+        compatible=(b'D22AP\x00' + b'iPhone10,3\x00' + b'xiaomi,sweet\x00'
+                    + b'qcom,sm7150\x00' + b'AppleARM\x00'),
         model=b'iPhone10,3', target_type=b'D22', target_sub=b'D22AP',
         io_devtype=b'sweet-io', io_compat=b'sweet-io',
-        cpu_compat=b'qcom,kryo470' + b'ARM,v8',
+        cpu_compat=b'qcom,kryo470\x00' + b'ARM,v8\x00',
         big_clk=2304000000, little_clk=1804800000, big_first=False,
     ),
     'polaris': dict(
@@ -70,10 +71,11 @@ MACHINES = {
         ufs=0x01d84000, ufs_size=0x2500,
         timebase=19200000, vtimer_intid=19,
         canvas_w=1080, canvas_h=2160,
-        compatible=b'D22AP' + b'iPhone10,3' + b'xiaomi,polaris' + b'qcom,sdm845' + b'AppleARM',
+        compatible=(b'D22AP\x00' + b'iPhone10,3\x00' + b'xiaomi,polaris\x00'
+                    + b'qcom,sdm845\x00' + b'AppleARM\x00'),
         model=b'iPhone10,3', target_type=b'D22', target_sub=b'D22AP',
         io_devtype=b'polaris-io', io_compat=b'polaris-io',
-        cpu_compat=b'qcom,kryo385' + b'ARM,v8',
+        cpu_compat=b'qcom,kryo385\x00' + b'ARM,v8\x00',
         # SDM845: cluster 0 = Kryo 385 Gold (Cortex-A75, 2.8GHz, cores 0-3),
         # cluster 1 = Kryo 385 Silver (Cortex-A55, 1.8GHz, cores 4-7). The DTB
         # cpu@0..cpu@300 have reg <0x0>..<0x300> => big-first (cores 0-3 big).
@@ -103,11 +105,11 @@ MACHINES = {
         # attach to unmodified drivers. 'xiaomi,perseus' / 'qcom,kryo385' ride
         # along as the board's real identity (SDM845 is a Kryo 385, not a
         # Kryo 470); XNU matches any string in the list, so they cost nothing.
-        compatible=(b'xiaomi,sweet' + b'xiaomi,perseus' + b'qcom,sdm845'
-                    + b'D22AP' + b'iPhone10,3' + b'AppleARM'),
+        compatible=(b'xiaomi,sweet\x00' + b'xiaomi,perseus\x00' + b'qcom,sdm845\x00'
+                    + b'D22AP\x00' + b'iPhone10,3\x00' + b'AppleARM\x00'),
         model=b'iPhone10,3', target_type=b'D22', target_sub=b'D22AP',
         io_devtype=b'sweet-io', io_compat=b'sweet-io',
-        cpu_compat=b'qcom,kryo470' + b'qcom,kryo385' + b'ARM,v8',
+        cpu_compat=b'qcom,kryo470\x00' + b'qcom,kryo385\x00' + b'ARM,v8\x00',
         display_compat='sweet,display',
         # Kryo 385 Gold (A75, 2.8GHz, cores 0-3) + Silver (A55, 1.8GHz, 4-7):
         # the same big-first topology as polaris.
