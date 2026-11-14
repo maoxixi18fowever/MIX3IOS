@@ -1,0 +1,118 @@
+diff --git a/iokit/bsddev/IOKitBSDInit.cpp b/iokit/bsddev/IOKitBSDInit.cpp
+index e6c74aa..55f28a5 100644
+--- a/iokit/bsddev/IOKitBSDInit.cpp
++++ b/iokit/bsddev/IOKitBSDInit.cpp
+@@ -553,6 +553,70 @@ IOGetBootManifestHash(char *hash_data, size_t *hash_data_size)
+ 	return result;
+ }
+ 
++/*
++ * Bounded waits below. Neither wait had a timeout, so a board where no
++ * IODTNVRAM/IONVRAM driver is ever published stops at this point and prints
++ * nothing more - the boot-failure chain ends in a hang instead of an error.
++ */
++#define kBootFailNvramWaitSeconds       10
++#define kBootFailNvramResourceSeconds   5
++
++#if defined(ARM64_BOARD_CONFIG_SWEET) || defined(ARM64_BOARD_CONFIG_PERSEUS)
++
++/*
++ * Print what the storage stack actually published before we halt. A zero
++ * count for IOMedia means no block device was ever matched, which is a very
++ * different failure from "a disk exists but nothing could be mounted".
++ */
++static void
++sweetDumpBootDevices(void)
++{
++	static const char * const classes[] = {
++		"IOMedia",
++		"IOBlockStorageDevice",
++		"IODTNVRAM",
++		"IONVRAM",
++	};
++
++	for (size_t i = 0; i < sizeof(classes) / sizeof(classes[0]); i++) {
++		OSDictionary *match = IOService::serviceMatching(classes[i]);
++		OSIterator *iter;
++		IOService *service;
++		int count = 0;
++		char bsdName[32];
++
++		if (match == NULL) {
++			continue;
++		}
++		iter = IOService::getMatchingServices(match);
++		match->release();
++		if (iter == NULL) {
++			IOLog("SETRECOVERY: %s: no iterator\n", classes[i]);
++			continue;
++		}
++		/* getNextObject() does not return a retained object. */
++		while ((service = OSDynamicCast(IOService, iter->getNextObject())) != NULL) {
++			OSString *name = OSDynamicCast(OSString, service->getProperty("BSD Name"));
++
++			if (name != NULL) {
++				strlcpy(bsdName, name->getCStringNoCopy(), sizeof(bsdName));
++			} else {
++				strlcpy(bsdName, "-", sizeof(bsdName));
++			}
++			IOLog("SETRECOVERY: %s[%d] bsd=%s\n", classes[i], count, bsdName);
++			count++;
++		}
++		iter->release();
++		IOLog("SETRECOVERY: %s: %d object(s)\n", classes[i], count);
++	}
++}
++#else
++static void
++sweetDumpBootDevices(void)
++{
++}
++#endif
++
+ /*
+  * Set NVRAM to boot into the right flavor of Recovery,
+  * optionally passing a UUID of a volume that failed to boot.
+@@ -608,17 +672,27 @@ IOSetRecoveryBoot(bsd_bootfail_mode_t mode, uuid_t volume_uuid, boolean_t reboot
+ 			goto do_reboot;
+ 		}
+ 
+-		// Wait for NVRAM to be readable...
+-		nvram = OSDynamicCast(IODTNVRAM, IOService::waitForService(
+-			    IOService::serviceMatching("IODTNVRAM")));
++		// Wait for NVRAM to be readable, but not forever.
++		{
++			mach_timespec_t nvram_timeout;
++
++			nvram_timeout.tv_sec = kBootFailNvramWaitSeconds;
++			nvram_timeout.tv_nsec = 0;
++			nvram = OSDynamicCast(IODTNVRAM, IOService::waitForService(
++			    IOService::serviceMatching("IODTNVRAM"), &nvram_timeout));
++		}
+ 		if (nvram == NULL) {
+-			IOLog("Failed to acquire IODTNVRAM object.\n");
++			IOLog("Failed to acquire IODTNVRAM object (gave up after %d s).\n",
++			    kBootFailNvramWaitSeconds);
++			sweetDumpBootDevices();
+ 			goto do_reboot;
+ 		}
+ 
+-		// Wait for NVRAM to be writable...
+-		if (!IOServiceWaitForMatchingResource("IONVRAM", UINT64_MAX)) {
+-			IOLog("Failed to wait for IONVRAM service.\n");
++		// Wait for NVRAM to be writable, but not forever.
++		if (!IOServiceWaitForMatchingResource("IONVRAM",
++		    kBootFailNvramResourceSeconds * kSecondScale)) {
++			IOLog("Failed to wait for IONVRAM service (gave up after %d s).\n",
++			    kBootFailNvramResourceSeconds);
+ 			// attempt the work anyway...
+ 		}
+ 
+@@ -645,6 +719,7 @@ do_reboot:
+ 
+ 	if (reboot) {
+ 		IOLog("\nAbout to reboot into Recovery!\n");
++		IOLog("SETRECOVERY: recovery boot requested, halting here\n");
+ 		(void)PEHaltRestart(kPERestartCPU);
+ 	}
+ 
